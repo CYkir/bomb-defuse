@@ -1,0 +1,5 @@
+node_modules/
+bomb-defuse.sqlite
+bomb-defuse.sqlite-journal
+bomb-defuse.sqlite-shm
+bomb-defuse.sqlite-wal
