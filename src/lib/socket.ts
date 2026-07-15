@@ -8,7 +8,9 @@ export function getServerUrl(): string {
   if (saved) return saved;
   // Default: same hostname, port 3001 (the standalone Node/Express/Socket.IO server)
   const host = window.location.hostname || "localhost";
-  return `http://${host}:3001`;
+  // return `http://${host}:3001`;
+  return `https://api-bomb.cykir.web.id`;
+
 }
 
 export function setServerUrl(url: string) {

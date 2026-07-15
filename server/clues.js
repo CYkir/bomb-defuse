@@ -5,61 +5,93 @@
 
 export const WIRES = ["red", "green", "blue", "yellow", "black"];
 
+// Acak urutan kabel
 export function randomOrder() {
   const arr = [...WIRES];
+
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
+
   return arr;
 }
 
-const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-
+// Membuat kumpulan petunjuk
 export function generateClues(order) {
   const pool = [];
 
-  // Pairwise "X before Y"
+  // -----------------------------
+  // Urutan sebelum kabel lain
+  // -----------------------------
   for (let i = 0; i < order.length; i++) {
     for (let j = i + 1; j < order.length; j++) {
-      pool.push(`Cut ${cap(order[i])} before ${cap(order[j])}.`);
+      pool.push(
+        `Putuskan kabel ${order[i]} sebelum kabel ${order[j]}.`
+      );
     }
   }
-  // Immediate neighbors
+
+  // -----------------------------
+  // Tepat setelah
+  // -----------------------------
   for (let i = 0; i < order.length - 1; i++) {
     pool.push(
-      `${cap(order[i + 1])} must be cut right after ${cap(order[i])}.`,
+      `Kabel ${order[i + 1]} harus diputus tepat setelah kabel ${order[i]}.`
     );
   }
-  // Firsts and lasts
-  pool.push(`Do NOT cut ${cap(order[order.length - 1])} first.`);
-  pool.push(`The last wire to cut is ${cap(order[order.length - 1])}.`);
-  pool.push(`Start with ${cap(order[0])}.`);
-  // Conditional timer hint (always safe because it's about the current step)
+
+  // -----------------------------
+  // Awal & Akhir
+  // -----------------------------
   pool.push(
-    `If the timer drops below 20 seconds, the next wire is always ${cap(order[2])}.`,
+    `Jangan memutus kabel ${order[order.length - 1]} sebagai kabel pertama.`
   );
-  // Negative constraints
-  for (let i = 0; i < order.length; i++) {
-    const wrong = WIRES.find((w) => w !== order[0]);
-    if (wrong) pool.push(`Never cut ${cap(wrong)} first.`);
-    break;
+
+  pool.push(
+    `Kabel terakhir yang harus diputus adalah kabel ${order[order.length - 1]}.`
+  );
+
+  pool.push(
+    `Mulailah dengan memutus kabel ${order[0]}.`
+  );
+
+  // -----------------------------
+  // Petunjuk waktu
+  // -----------------------------
+  pool.push(
+    `Jika waktu tersisa kurang dari 20 detik, kabel berikutnya adalah kabel ${order[2]}.`
+  );
+
+  // -----------------------------
+  // Larangan
+  // -----------------------------
+  const wrong = WIRES.find((w) => w !== order[0]);
+
+  if (wrong) {
+    pool.push(
+      `Jangan pernah memutus kabel ${wrong} sebagai kabel pertama.`
+    );
   }
 
-  // Shuffle
+  // Acak clue
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
+
   return pool;
 }
 
-// Assign one distinct clue per player.
+// Bagikan clue ke setiap pemain
 export function assignClues(playerIds, order) {
   const pool = generateClues(order);
+
   const map = {};
-  playerIds.forEach((pid, i) => {
-    map[pid] = pool[i % pool.length];
+
+  playerIds.forEach((id, index) => {
+    map[id] = pool[index % pool.length];
   });
+
   return map;
 }

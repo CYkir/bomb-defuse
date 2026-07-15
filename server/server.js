@@ -6,6 +6,7 @@ import Database from "better-sqlite3";
 import { fileURLToPath } from "url";
 import path from "path";
 import { WIRES, randomOrder, assignClues } from "./clues.js";
+import os from "os";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3001;
@@ -42,6 +43,26 @@ const app = express();
 app.use(cors({ origin: "*" }));
 app.get("/", (_req, res) => res.send("Bomb Defuse server running."));
 app.get("/health", (_req, res) => res.json({ ok: true }));
+
+
+app.get("/api/network", (_req, res) => {
+  const interfaces = os.networkInterfaces();
+
+  const addresses = [];
+
+  for (const list of Object.values(interfaces)) {
+    for (const item of list || []) {
+      if (item.family === "IPv4" && !item.internal) {
+        addresses.push(item.address);
+      }
+    }
+  }
+
+  res.json({
+    addresses,
+    port: PORT,
+  });
+});
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -380,7 +401,21 @@ io.on("connection", (socket) => {
 });
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`\n💣  Bomb Defuse server listening on http://0.0.0.0:${PORT}`);
-  console.log(`   Point the web app's "Server URL" setting at this address.`);
-  console.log(`   From another device on the same WiFi, use your laptop's LAN IP.`);
+  console.log("\n💣 Bomb Defuse Server Running");
+
+  console.log(`   Local   : http://localhost:${PORT}`);
+
+  const interfaces = os.networkInterfaces();
+
+  for (const list of Object.values(interfaces)) {
+    for (const item of list || []) {
+      if (item.family === "IPv4" && !item.internal) {
+        console.log(
+          `   Network : http://${item.address}:${PORT}`
+        );
+      }
+    }
+  }
+
+  console.log("");
 });
