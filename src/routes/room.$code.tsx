@@ -20,7 +20,7 @@ function Room() {
   const { code } = Route.useParams();
   const navigate = useNavigate();
   const [state, setState] = useState<RoomState | null>(null);
-  const [clue, setClue] = useState<string>("");
+  const [clue, setClue] = useState<string[]>([]);
   const [myId, setMyId] = useState<string>("");
   const [error, setError] = useState("");
   const [flash, setFlash] = useState<"good" | "bad" | null>(null);
@@ -53,7 +53,14 @@ function Room() {
     s.on("room:state", (rs: RoomState) => {
       setState(rs);
     });
-    s.on("room:clue", ({ clue }: { clue: string }) => setClue(clue));
+    // s.on("room:clue", ({ clue }: { clue: string }) => setClue(clue));
+    s.on("room:clue", ({ clue }) => {
+      if (Array.isArray(clue)) {
+        setClue(clue);
+      } else {
+        setClue([clue]);
+      }
+    });
     s.on("game:cutResult", ({ correct }: { correct: boolean }) => {
       setFlash(correct ? "good" : "bad");
       if (correct) sounds.correct();
@@ -74,10 +81,7 @@ function Room() {
     };
   }, [code]);
 
-  const me = useMemo(
-    () => state?.players.find((p) => p.id === myId),
-    [state, myId],
-  );
+  const me = useMemo(() => state?.players.find((p) => p.id === myId), [state, myId]);
 
   useEffect(() => {
     if (!state) return;
@@ -135,37 +139,24 @@ function Room() {
       <div className="mx-auto max-w-md">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">
-              Room
-            </div>
-            <div className="font-display text-2xl font-black neon-text">
-              {state.code}
-            </div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">Room</div>
+            <div className="font-display text-2xl font-black neon-text">{state.code}</div>
           </div>
           <div className="text-right">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">
-              Agent
-            </div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">Agent</div>
             <div className="font-semibold">{me?.nickname || "…"}</div>
           </div>
         </div>
 
         {state.phase === "lobby" && (
-          <LobbyView
-            state={state}
-            me={me}
-            onReady={toggleReady}
-            onLeave={leave}
-          />
+          <LobbyView state={state} me={me} onReady={toggleReady} onLeave={leave} />
         )}
 
         {state.phase === "countdown" && (
           <div className="glass rounded-2xl p-16 text-center">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">
-              Get Ready
-            </div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">Get Ready</div>
             <div className="mt-4 font-display text-8xl font-black neon-text animate-tick">
-              {state.countdown === "GO" ? "GO!" : state.countdown ?? 3}
+              {state.countdown === "GO" ? "GO!" : (state.countdown ?? 3)}
             </div>
           </div>
         )}
@@ -192,17 +183,47 @@ function Room() {
               >
                 {String(state.timeLeft).padStart(2, "0")}
               </div>
-              <div className="font-display text-lg text-glow">
-                {state.score}
-              </div>
+              <div className="font-display text-lg text-glow">{state.score}</div>
             </div>
 
             <div className="glass-strong rounded-2xl p-5">
               <div className="text-xs uppercase tracking-widest text-muted-foreground">
                 Your Clue
               </div>
-              <div className="mt-2 text-lg font-semibold leading-snug">
-                {clue || "(no clue this round — help your team!)"}
+              <div className="mt-2 space-y-3">
+                {clue.length === 0 && <p>Tidak ada petunjuk pada ronde ini.</p>}
+
+                {clue.map((item, index) => (
+                  <div
+                    key={index}
+                    className="
+            rounded-xl
+            border
+            border-white/10
+            bg-white/5
+            p-3
+            "
+                  >
+                    <div
+                      className="
+            text-xs
+            text-neon-purple
+            mb-1
+            "
+                    >
+                      PETUNJUK {index + 1}
+                    </div>
+
+                    <div
+                      className="
+            text-base
+            font-semibold
+            "
+                    >
+                      {item}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -249,18 +270,13 @@ function Room() {
               </>
             ) : (
               <>
-                <div className="font-display text-4xl font-black danger-text">
-                  BOOM
-                </div>
+                <div className="font-display text-4xl font-black danger-text">BOOM</div>
                 <p className="mt-2 text-sm text-muted-foreground">
                   Mission failed. Score: {state.score}
                 </p>
               </>
             )}
-            <button
-              onClick={leave}
-              className="btn-neon hover:btn-neon-hover mt-6"
-            >
+            <button onClick={leave} className="btn-neon hover:btn-neon-hover mt-6">
               Return home
             </button>
           </div>
