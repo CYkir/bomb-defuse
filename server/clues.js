@@ -1,8 +1,3 @@
-// Clue generation for Bomb Defuse.
-// Given a correct wire-cut order (a permutation of 5 wires), generate a pool
-// of TRUE statements about that order and hand one distinct clue to each
-// player. Not every clue is delivered, so the team must talk to combine info.
-
 export const WIRES = ["red", "green", "blue", "yellow", "black"];
 
 const wireName = {
